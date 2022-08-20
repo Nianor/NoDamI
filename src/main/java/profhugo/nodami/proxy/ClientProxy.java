@@ -1,6 +1,6 @@
 package profhugo.nodami.proxy;
 
-public class ClientProxy extends CommonProxy {
+public class ClientProxy extends ServerProxy {
 
 	@Override
 	public void preInit() {

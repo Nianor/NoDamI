@@ -7,8 +7,8 @@
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ProfHugo"],
-  "credits": "ProfHugo, and the Forge and FML team.",
+  "authorList": ["ProfHugo, Nianor"],
+  "credits": "Nianor (1.18.2 port), ProfHugo (Original Author), and the Forge and FML team.",
   "logoFile": "",
   "screenshots": [],
   "dependencies": []

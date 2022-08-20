@@ -1,39 +1,69 @@
 package profhugo.nodami;
 
+import com.mojang.logging.LogUtils;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.InterModComms;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import profhugo.nodami.proxy.CommonProxy;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.slf4j.Logger;
+import profhugo.nodami.config.NoDamIConfig;
+import profhugo.nodami.proxy.ClientProxy;
+import profhugo.nodami.proxy.ServerProxy;
 
-@Mod(modid = NoDamI.MODID, version = NoDamI.VERSION, acceptableRemoteVersions = "*")
+import java.util.stream.Collectors;
+
+
+@Mod("nodami")
 public class NoDamI {
-	
+
 	public static final String MODID = "nodami";
 	public static final String NAME = "No Damage Immunity";
-	public static final String VERSION = "1.3.1";
+	public static final String VERSION = "1.3.2";
 
-	@Mod.Instance(MODID)
-	public static NoDamI instance;
+	private static final Logger LOGGER = LogUtils.getLogger();
 
-	@SidedProxy(serverSide = "profhugo.nodami.proxy.CommonProxy", clientSide = "profhugo.nodami.proxy.ClientProxy")
-	public static CommonProxy proxy;
-	
-	@Mod.EventHandler
-	public void preInit(FMLPreInitializationEvent event) {
+	public NoDamI() {
+		// Register the setup method for modloading
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+		// Register the enqueueIMC method for modloading
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
+		// Register the processIMC method for modloading
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
+
+		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, NoDamIConfig.CONFIG_SPEC.getBaseSpec(), "nodami-server.toml");
+
+		// Register ourselves for server and other game events we are interested in
+		MinecraftForge.EVENT_BUS.register(this);
+	}
+
+	public static ServerProxy proxy = DistExecutor.safeRunForDist(()-> ClientProxy::new, ()-> ServerProxy::new);
+	private void setup(final FMLCommonSetupEvent event) {
+		// Some preinit code
 		System.out.println(NAME + " is loading!");
 		proxy.preInit();
-
-	}
-
-	@Mod.EventHandler
-	public void init(FMLInitializationEvent event) {
 		proxy.init();
+		proxy.postInit();
+	}
+	private void enqueueIMC(final InterModEnqueueEvent event) {
+		// Some example code to dispatch IMC to another mod
+		/*InterModComms.sendTo("nodami", "helloworld", () -> {
+			LOGGER.info("Hello world from the MDK");
+			return "Hello world";
+		});*/
 	}
 
-	@Mod.EventHandler
-	public void postInit(FMLPostInitializationEvent event) {
-		proxy.postInit();
+	private void processIMC(final InterModProcessEvent event) {
+		// Some example code to receive and process InterModComms from other mods
+		LOGGER.info("Got IMC {}", event.getIMCStream().
+				map(m -> m.messageSupplier().get()).
+				collect(Collectors.toList()));
 	}
 }
